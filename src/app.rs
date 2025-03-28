@@ -32,9 +32,10 @@ pub fn App() -> impl IntoView {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/todo-app.css"/>
+        <link rel="stylesheet" id="leptos" href="/pkg/leptos_tailwind.css"/>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="Notes App"/>
 
         // content for this welcome page
         <Router>
@@ -51,11 +52,28 @@ pub fn App() -> impl IntoView {
 #[component]
 fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
-    let count = RwSignal::new(0);
-    let on_click = move |_| *count.write() += 1;
+    let (value,set_value) = signal(0);
+
 
     view! {
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
+        <main>
+            <div class="bg-gradient-to-tl from-orange-500 to-orange-300 text-white font-mono flex flex-col min-h-screen">
+                <div class="flex flex-row-reverse flex-wrap m-auto">
+                    <button on:click=move |_| set_value.update(|value| *value += 1) class="rounded px-3 py-2 m-1 border-b-4 border-l-2 shadow-lg bg-orange-400 border-orange-500 text-white">
+                        "+"
+                    </button>
+                    <button class="rounded px-3 py-2 m-1 border-b-4 border-l-2 shadow-lg bg-orange-500 border-orange-600 text-white">
+                        {value}
+                    </button>
+                    <button
+                        on:click=move |_| set_value.update(|value| *value -= 1)
+                        class="rounded px-3 py-2 m-1 border-b-4 border-l-2 shadow-lg bg-orange-400 border-orange-500 text-white"
+                        class:invisible=move || {value.get() < 1}
+                    >
+                        "-"
+                    </button>
+                </div>
+            </div>
+        </main>
     }
 }
