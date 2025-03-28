@@ -72,6 +72,8 @@ fn HomePage() -> impl IntoView {
                     >
                         "-"
                     </button>
+
+                    <input type="text" class="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter text here"/>
                 </div>
             </div>
         </main>

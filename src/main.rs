@@ -1,20 +1,52 @@
+#[cfg(feature = "ssr")]
+use axum::{
+    body::Body,
+    extract::Path,
+    http::Request,
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+};
+use leptos::prelude::*;
+use todo_app::*;
+//Define a handler to test extractor with state
+#[cfg(feature = "ssr")]
+async fn custom_handler(
+    Path(id): Path<String>,
+    req: Request<Body>,
+) -> Response {
+    let handler = leptos_axum::render_app_to_stream_with_context(
+        move || {
+            provide_context(id.clone());
+        },
+        todo::TodoApp,
+    );
+    handler(req).await.into_response()
+}
 
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
-    use axum::Router;
-    use leptos::logging::log;
-    use leptos::prelude::*;
+    use crate::todo::{ssr::db, *};
     use leptos_axum::{generate_route_list, LeptosRoutes};
-    use todo_app::app::*;
 
+    simple_logger::init_with_level(log::Level::Error)
+        .expect("couldn't initialize logging");
+
+    let mut conn = db().await.expect("couldn't connect to DB");
+    if let Err(e) = sqlx::migrate!().run(&mut conn).await {
+        eprintln!("{e:?}");
+    }
+
+    // Setting this to None means we'll be using cargo-leptos and its env vars
     let conf = get_configuration(None).unwrap();
-    let addr = conf.leptos_options.site_addr;
     let leptos_options = conf.leptos_options;
-    // Generate the list of routes in your Leptos App
-    let routes = generate_route_list(App);
+    let addr = leptos_options.site_addr;
+    let routes = generate_route_list(TodoApp);
 
+    // build our application with a route
     let app = Router::new()
+        .route("/special/{id}", get(custom_handler))
         .leptos_routes(&leptos_options, routes, {
             let leptos_options = leptos_options.clone();
             move || shell(leptos_options.clone())
@@ -24,8 +56,8 @@ async fn main() {
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
-    log!("listening on http://{}", &addr);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    println!("listening on http://{}", &addr);
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
@@ -33,7 +65,9 @@ async fn main() {
 
 #[cfg(not(feature = "ssr"))]
 pub fn main() {
-    // no client-side main function
-    // unless we want this to work with e.g., Trunk for pure client-side testing
-    // see lib.rs for hydration function instead
+    use leptos::mount::mount_to_body;
+
+    _ = console_log::init_with_level(log::Level::Debug);
+    console_error_panic_hook::set_once();
+    mount_to_body(todo::TodoApp);
 }
