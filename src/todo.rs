@@ -1,5 +1,6 @@
 use crate::error_template::ErrorTemplate;
 use leptos::{either::Either, prelude::*};
+use leptos_meta::Stylesheet;
 use serde::{Deserialize, Serialize};
 use server_fn::ServerFnError;
 
@@ -12,7 +13,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <AutoReload options=options.clone() />
                 <HydrationScripts options/>
-                <link rel="stylesheet" id="leptos" href="/pkg/todo_app_sqlite_axum.css"/>
+                <Stylesheet id="leptos" href="/pkg/todo-app.css"/>
                 <link rel="shortcut icon" type="image/ico" href="/favicon.ico"/>
             </head>
             <body>
@@ -58,8 +59,7 @@ pub async fn get_todos() -> Result<Vec<Todo>, ServerFnError> {
     let mut conn = db().await?;
 
     let mut todos = Vec::new();
-    let mut rows =
-        sqlx::query_as::<_, Todo>("SELECT * FROM todos").fetch(&mut conn);
+    let mut rows = sqlx::query_as::<_, Todo>("SELECT * FROM todos").fetch(&mut conn);
     while let Some(row) = rows.try_next().await? {
         todos.push(row);
     }
@@ -105,11 +105,11 @@ pub async fn delete_todo(id: u16) -> Result<(), ServerFnError> {
 #[component]
 pub fn TodoApp() -> impl IntoView {
     view! {
-        <header>
-            <h1>"My Tasks"</h1>
-        </header>
-        <main>
+        <main class="bg-gradient-to-tl from-orange-500 to-orange-300 text-white font-mono flex flex-col min-h-screen items-center justify-center">
+        <div>
+            <h1 class="text-2xl font-bold text-white mb-2">"My Tasks"</h1>
             <Todos/>
+        </div>
         </main>
     }
 }
@@ -146,11 +146,11 @@ pub fn Todos() -> impl IntoView {
                                 .map(move |todo| {
                                     let id = todo.id;
                                     view! {
-                                        <li>
-                                            {todo.title.clone()}
+                                        <li class="flex flex-row gap-2 mb-2 items-center">
+                                            <div class="font-medium"> {todo.title.clone()} </div>
                                             <ActionForm action=delete_todo>
                                                 <input type="hidden" name="id" value=id/>
-                                                <input type="submit" value="X"/>
+                                                <input type="submit" value="X"  class="rounded px-1 py-1 m-1 border-b-4 border-l-2 shadow-lg bg-orange-400 border-orange-500 text-white"/>
                                             </ActionForm>
                                         </li>
                                     }
@@ -164,8 +164,10 @@ pub fn Todos() -> impl IntoView {
 
     view! {
         <MultiActionForm action=add_todo>
-            <label>"Add a Todo" <input type="text" name="title"/></label>
-            <input type="submit" value="Add"/>
+        <div class="flex flex-row mb-2 gap-2 items-center">
+            <label class="text-xl font-semibold text-white mb-2">"Add a Todo" <input type="text" name="title" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-auto p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Type here..." required /></label>
+            <input type="submit" value="Add" />
+            </div>
         </MultiActionForm>
         <div>
             <Transition fallback=move || view! { <p>"Loading..."</p> }>

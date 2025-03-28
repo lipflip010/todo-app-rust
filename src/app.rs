@@ -32,7 +32,6 @@ pub fn App() -> impl IntoView {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/todo-app.css"/>
-        <link rel="stylesheet" id="leptos" href="/pkg/leptos_tailwind.css"/>
 
         // sets the document title
         <Title text="Notes App"/>
